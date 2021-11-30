@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/blockchain"
+    tools:context=".Core.activity_signup">
+
+
+    <Button
+        android:id="@+id/btn_blockchain_reg"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="414dp"
+        android:layout_marginRight="47dp"
+        android:background="@drawable/btnsignin_gradient"
+        android:text="Blockchain Registration "
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btn_blockchain_verify"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="479dp"
+        android:layout_marginRight="43dp"
+        android:background="@drawable/btnsignin_gradient"
+        android:text="User Verification "
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="540dp"
+        android:layout_marginRight="45dp"
+        android:background="@drawable/btnsignin_gradient"
+        android:text="Logout "
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btn_requests"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+
+        android:layout_marginTop="25dp"
+        android:layout_marginRight="19dp"
+        android:background="@null"
+
+        android:text="Requests"
+        android:textColor="@color/white"
+        android:textSize="23sp"
+        android:textStyle="italic" />
+
+
+</RelativeLayout>
+
+
+
