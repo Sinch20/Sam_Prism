@@ -48,7 +48,6 @@ public class Blockchain_user_verification extends AppCompatActivity
     private FirebaseAuth mAuth;
 
     String pathToFile;
-    String filefinal;
     String filePath = "Pictures/";
     private Button btn_verification, btn_takepic;
     private ImageView imageView;
@@ -101,7 +100,7 @@ public class Blockchain_user_verification extends AppCompatActivity
     private void uploadImage()
     {
         // gets file path
-        File file = new File(filefinal);
+        File file = new File(filePath);
         // get retrofit instance
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
@@ -185,7 +184,7 @@ public class Blockchain_user_verification extends AppCompatActivity
             bitmap.recycle();
             try {
                 File file=createPhotoFile("2");
-                filefinal=file.getAbsolutePath();
+                filePath=file.getAbsolutePath();
                 FileOutputStream out;
                 out = new FileOutputStream(file);
                 bmRotated.compress(Bitmap.CompressFormat.JPEG, 100, out);

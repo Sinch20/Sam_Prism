@@ -1,6 +1,7 @@
 package com.example.Blockchain_App.Blockchain;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -17,6 +18,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
@@ -24,7 +26,13 @@ import androidx.core.content.FileProvider;
 import com.example.Blockchain_App.Network.NetworkClient;
 import com.example.Blockchain_App.Network.UploadApis;
 import com.example.Blockchain_App.R;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +40,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -48,13 +57,17 @@ public class Blockchain_user_registration extends AppCompatActivity
     private FirebaseAuth mAuth;
 
     String pathToFile;
-    String filefinal;
+    private Uri photoURI;
     String filePath = "Pictures/";
     private Button btn_register, btn_takepic;
     private ImageView imageView;
     private String UserDetails = "";
 
     private boolean  flag = false;
+
+    // instance for firebase storage and StorageReference
+    FirebaseStorage storage;
+    StorageReference storageReference;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
 
@@ -71,25 +84,9 @@ public class Blockchain_user_registration extends AppCompatActivity
             requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
         }
 
-        btn_takepic.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                dispatchPictureTakerAction();
-            }
-        });
+        btn_takepic.setOnClickListener(view -> dispatchPictureTakerAction());
 
-        btn_register.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                uploadImage();
-            }
-        });
-
-
-
+        btn_register.setOnClickListener(v -> uploadImage());
 
     }
 /*
@@ -100,7 +97,7 @@ public class Blockchain_user_registration extends AppCompatActivity
     private void uploadImage()
     {
         // gets file path
-        File file = new File(filefinal);
+        File file = new File(filePath);
         // get retrofit instance
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
@@ -126,6 +123,72 @@ public class Blockchain_user_registration extends AppCompatActivity
                 Toast.makeText(Blockchain_user_registration.this,""+ t.getMessage(),Toast.LENGTH_LONG).show();
             }
         });
+
+
+        // Code for showing progressDialog while uploading
+        ProgressDialog progressDialog
+                = new ProgressDialog(this);
+        progressDialog.setTitle("Uploading...");
+        progressDialog.show();
+
+        // Defining the child of storageReference
+        StorageReference ref
+                = storageReference
+                .child("images/"
+                        + UUID.randomUUID().toString());
+        // adding listeners on upload
+        // or failure of image
+        ref.putFile(photoURI)
+                .addOnSuccessListener(
+                        taskSnapshot -> {
+
+                            // Image uploaded successfully
+                            // Dismiss dialog
+                            progressDialog.dismiss();
+                            Toast
+                                    .makeText(getApplicationContext(),
+                                            "Image Uploaded Successfully",
+                                            Toast.LENGTH_LONG)
+                                    .show();
+
+                            ref.getDownloadUrl().addOnSuccessListener(uri -> Picasso.get()
+                                    .load(uri)
+                                    .resize(80, 80)
+                                    .centerCrop()
+                                    .into(imageView));
+
+                        })
+
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                        // Error, Image not uploaded
+                        progressDialog.dismiss();
+                        Toast
+                                .makeText(getApplicationContext(),
+                                        "Failed " + e.getMessage(),
+                                        Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .addOnProgressListener(
+                        new OnProgressListener<UploadTask.TaskSnapshot>() {
+
+                            // Progress Listener for loading
+                            // percentage on the dialog box
+                            @Override
+                            public void onProgress(
+                                    UploadTask.TaskSnapshot taskSnapshot) {
+                                double progress
+                                        = (100.0
+                                        * taskSnapshot.getBytesTransferred()
+                                        / taskSnapshot.getTotalByteCount());
+                                progressDialog.setMessage(
+                                        "Uploaded "
+                                                + (int) progress + "%");
+                            }
+                        });
     }
 
     @Override
@@ -184,7 +247,7 @@ public class Blockchain_user_registration extends AppCompatActivity
             bitmap.recycle();
             try {
                 File file=createPhotoFile("2");
-                filefinal=file.getAbsolutePath();
+                filePath=file.getAbsolutePath();
                 FileOutputStream out;
                 out = new FileOutputStream(file);
                 bmRotated.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -204,18 +267,16 @@ public class Blockchain_user_registration extends AppCompatActivity
     private void dispatchPictureTakerAction()
     {
         Intent takePic = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePic.resolveActivity(getPackageManager()) != null) {
-            File photoFile = null;
-            photoFile = createPhotoFile("1");
-            if (photoFile != null) {
-                pathToFile = photoFile.getAbsolutePath();
-                filePath=pathToFile;
-                Uri photoURI = FileProvider.getUriForFile(
-                        getApplicationContext(), "com.example.Blockchain_App.fileprovider", photoFile
-                );
-                takePic.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePic, 1);
-            }
+        File photoFile = null;
+        photoFile = createPhotoFile("1");
+        if (photoFile != null) {
+            pathToFile = photoFile.getAbsolutePath();
+            filePath=pathToFile;
+            photoURI = FileProvider.getUriForFile(
+                    getApplicationContext(), "com.example.Blockchain_App.fileprovider", photoFile
+            );
+            takePic.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+            startActivityForResult(takePic, 1);
         }
     }
 
@@ -238,5 +299,8 @@ public class Blockchain_user_registration extends AppCompatActivity
         btn_register = findViewById(R.id.btn_blockchain_reg);
         //btn_takepic = findViewById(R.id.btn_takepic);
         imageView = findViewById(R.id.img_clicked);
+
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReference();
     }
 }
