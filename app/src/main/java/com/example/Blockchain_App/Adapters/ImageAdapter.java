@@ -7,10 +7,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.Blockchain_App.Core.ImagesActivity;
+import com.example.Blockchain_App.Model.Request;
 import com.example.Blockchain_App.R;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 import com.squareup.picasso.Picasso;
 import com.example.Blockchain_App.Model.Upload;
 import java.util.List;
@@ -18,10 +24,10 @@ import java.util.List;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {
     private Context mContext;
-    private List<Upload> mUploads;
+    private List<Request> mUploads;
     private OnItemClickListener mListener;
 
-    public ImageAdapter(Context context, List<Upload> uploads) {
+    public ImageAdapter(Context context, List<Request> uploads) {
         mContext = context;
         mUploads = uploads;
     }
@@ -29,19 +35,21 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     @Override
     public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(mContext).inflate(R.layout.card, parent, false);
+
         return new ImageViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(ImageViewHolder holder, int position) {
-        Upload uploadCurrent = mUploads.get(position);
-        holder.textViewName.setText(uploadCurrent.getName());
+        Request requestCurrent = mUploads.get(position);
+        holder.textViewName.setText(requestCurrent.getName());
         Picasso.get()
-                .load(uploadCurrent.getImageUrl())
+                .load(requestCurrent.getUrl())
                 .placeholder(R.mipmap.ic_launcher)
                 .fit()
                 .centerCrop()
                 .into(holder.imageView);
+
     }
 
     @Override
@@ -53,15 +61,25 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             View.OnCreateContextMenuListener, MenuItem.OnMenuItemClickListener {
         public TextView textViewName;
         public ImageView imageView;
+        public Button acceptBtn;
 
         public ImageViewHolder(View itemView) {
             super(itemView);
 
             textViewName = itemView.findViewById(R.id.example_name);
             imageView = itemView.findViewById(R.id.imagev);
+            acceptBtn = itemView.findViewById(R.id.grant_button);
 
             itemView.setOnClickListener(this);
             itemView.setOnCreateContextMenuListener(this);
+
+            acceptBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(acceptBtn.getRootView(), "TODO: Backend integration", BaseTransientBottomBar.LENGTH_SHORT).show();
+                    Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         @Override

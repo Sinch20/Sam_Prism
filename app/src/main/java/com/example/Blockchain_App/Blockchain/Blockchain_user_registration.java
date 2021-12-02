@@ -59,7 +59,7 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 
 public class Blockchain_user_registration extends AppCompatActivity
 {
-    private static final String FLAT_NO = "Flat 101";
+    public static final String FLAT_NO = "Flat 101";
     private FirebaseAuth mAuth;
 
     String pathToFile;
@@ -168,7 +168,7 @@ public class Blockchain_user_registration extends AppCompatActivity
                                 @Override
                                 public void onSuccess(Uri uri) {
                                     //building data to upload to db
-                                    Request request = new Request(UserName, reqID, uri, 0);
+                                    Request request = new Request(UserName, reqID, String.valueOf(uri), 0);
                                     Log.i("Request", request.toString());
                                     mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
                                         @Override

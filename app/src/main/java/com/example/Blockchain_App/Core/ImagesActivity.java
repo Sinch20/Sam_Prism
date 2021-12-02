@@ -1,6 +1,10 @@
 package com.example.Blockchain_App.Core;
+import static com.example.Blockchain_App.Blockchain.Blockchain_user_registration.FLAT_NO;
+
+import com.example.Blockchain_App.Model.Request;
 import com.example.Blockchain_App.Model.Upload;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -12,7 +16,9 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.Blockchain_App.R;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,10 +39,9 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
     private ProgressBar mProgressCircle;
 
     private FirebaseStorage mStorage;
-    private DatabaseReference mDatabaseRef;
-    private ValueEventListener mDBListener;
+    private DatabaseReference mDatabase;
 
-    private List<Upload> mUploads;
+    private List<Request> mRequests;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,42 +51,34 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        mUploads = new ArrayList<>();
+        mRequests = new ArrayList<>();
 
-        mAdapter = new ImageAdapter(ImagesActivity.this, mUploads);
+        mAdapter = new ImageAdapter(ImagesActivity.this, mRequests);
 
         mRecyclerView.setAdapter(mAdapter);
 
         mAdapter.setOnItemClickListener(ImagesActivity.this);
 
         mStorage = FirebaseStorage.getInstance();
-        mDatabaseRef = FirebaseDatabase.getInstance().getReference("uploads");
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
-
-        mDBListener = mDatabaseRef.addValueEventListener(new ValueEventListener() {
+        mDatabase.child(FLAT_NO).child("Requests").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                mUploads.clear();
-
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    Upload upload = postSnapshot.getValue(Upload.class);
-                    Log.d("Upload Return: ", upload.toString());
-                    upload.setKey(postSnapshot.getKey());
-                    mUploads.add(upload);
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (!task.isSuccessful()) {
+                    Log.e("firebase", "Error getting data", task.getException());
                 }
-
-                mAdapter.notifyDataSetChanged();
-
-//                mProgressCircle.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(ImagesActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                mProgressCircle.setVisibility(View.INVISIBLE);
+                else {
+                    Request pending = task.getResult().getValue(Request.class);
+                    if (pending != null) {
+                        Log.d("Firebase Fetch", String.valueOf(pending.toMap()));
+                        mRequests.add(pending);
+                        mAdapter.notifyDataSetChanged();
+                    }
+                }
             }
         });
+
     }
 
     @Override
@@ -96,22 +93,17 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
 
     @Override
     public void onDeleteClick(int position) {
-        Upload selectedItem = mUploads.get(position);
-        final String selectedKey = selectedItem.getKey();
+        Request selectedItem = mRequests.get(position);
+        final String reqKey = selectedItem.getReqID();
 
-        StorageReference imageRef = mStorage.getReferenceFromUrl(selectedItem.getImageUrl());
+        StorageReference imageRef = mStorage.getReferenceFromUrl(selectedItem.getUrl());
         imageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                mDatabaseRef.child(selectedKey).removeValue();
+                mDatabase.child("Requests").removeValue();
                 Toast.makeText(ImagesActivity.this, "Item deleted", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mDatabaseRef.removeEventListener(mDBListener);
-    }
 }
