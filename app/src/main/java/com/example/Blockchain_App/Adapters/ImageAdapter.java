@@ -1,4 +1,6 @@
 package com.example.Blockchain_App.Adapters;
+import static com.example.Blockchain_App.Blockchain.Blockchain_user_registration.mAuth;
+
 import android.content.Context;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.ContextMenu;
@@ -12,24 +14,37 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.Blockchain_App.Core.ImagesActivity;
+import com.example.Blockchain_App.Blockchain.Blockchain_user_registration;
 import com.example.Blockchain_App.Model.Request;
+import com.example.Blockchain_App.Network.NetworkClient;
+import com.example.Blockchain_App.Network.UploadApis;
 import com.example.Blockchain_App.R;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
-import com.example.Blockchain_App.Model.Upload;
+
+import java.io.File;
 import java.util.List;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {
     private Context mContext;
-    private List<Request> mUploads;
+    private List<Request> mRequests;
     private OnItemClickListener mListener;
 
     public ImageAdapter(Context context, List<Request> uploads) {
         mContext = context;
-        mUploads = uploads;
+        mRequests = uploads;
     }
 
     @Override
@@ -41,7 +56,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     @Override
     public void onBindViewHolder(ImageViewHolder holder, int position) {
-        Request requestCurrent = mUploads.get(position);
+        Request requestCurrent = mRequests.get(position);
         holder.textViewName.setText(requestCurrent.getName());
         Picasso.get()
                 .load(requestCurrent.getUrl())
@@ -54,7 +69,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     @Override
     public int getItemCount() {
-        return mUploads.size();
+        return mRequests.size();
     }
 
     public class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
@@ -62,6 +77,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         public TextView textViewName;
         public ImageView imageView;
         public Button acceptBtn;
+        public Button declineBtn;
 
         public ImageViewHolder(View itemView) {
             super(itemView);
@@ -69,6 +85,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             textViewName = itemView.findViewById(R.id.example_name);
             imageView = itemView.findViewById(R.id.imagev);
             acceptBtn = itemView.findViewById(R.id.grant_button);
+            declineBtn = itemView.findViewById(R.id.decline_button);
 
             itemView.setOnClickListener(this);
             itemView.setOnCreateContextMenuListener(this);
@@ -78,6 +95,22 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 public void onClick(View view) {
                     Snackbar.make(acceptBtn.getRootView(), "TODO: Backend integration", BaseTransientBottomBar.LENGTH_SHORT).show();
                     Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
+
+                    postBack(true);
+                    view.setClickable(false);
+
+                }
+            });
+
+            declineBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(acceptBtn.getRootView(), "TODO: Backend integration", BaseTransientBottomBar.LENGTH_SHORT).show();
+                    Toast.makeText(acceptBtn.getContext(), "Decline Clicked", Toast.LENGTH_SHORT).show();
+
+                    postBack(false);
+                    view.setClickable(false);
+
                 }
             });
         }
@@ -120,6 +153,33 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             }
             return false;
         }
+    }
+
+    private void postBack(boolean i) {
+        // get retrofit instance
+        Retrofit retrofit = NetworkClient.getRetrofit();
+        // form the request body for image
+        // form user requestbody of type  plain text
+        String UserName = (FirebaseAuth.getInstance().getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getEmail();
+        RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
+        RequestBody reqID = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(mRequests.get(0)));
+        RequestBody response = RequestBody.create(MediaType.parse("text/plain"),
+                String.valueOf((i)?"accept".toUpperCase():"reject".toUpperCase()));
+
+        UploadApis uploadApis = retrofit.create(UploadApis.class);
+        // make the network API call PARAM : reqID and username
+        Call call = uploadApis.Response(username, reqID, response);
+        call.enqueue(new Callback() {
+            @Override
+            public void onResponse(Call call, Response response) {
+                Toast.makeText(mContext,""+response.message(),Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(Call call, Throwable t) {
+                Toast.makeText(mContext,""+ t.getMessage(),Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     public interface OnItemClickListener {

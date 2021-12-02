@@ -29,7 +29,6 @@ import com.example.Blockchain_App.Network.UploadApis;
 import com.example.Blockchain_App.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -42,7 +41,6 @@ import com.google.firebase.storage.UploadTask;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -60,11 +58,11 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 public class Blockchain_user_registration extends AppCompatActivity
 {
     public static final String FLAT_NO = "Flat 101";
-    private FirebaseAuth mAuth;
+    public static FirebaseAuth mAuth;
 
     String pathToFile;
     private Uri photoURI;
-    String filePath = "Pictures/";
+    String fileStorageDir = "Pictures/";
     private Button btn_register, btn_takepic;
     private ImageView imageView;
     private String UserName = "";
@@ -105,7 +103,7 @@ public class Blockchain_user_registration extends AppCompatActivity
     private void uploadImage()
     {
         // gets file path
-        File file = new File(filePath);
+        File file = new File(fileStorageDir);
         // get retrofit instance
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
@@ -231,7 +229,7 @@ public class Blockchain_user_registration extends AppCompatActivity
     private Bitmap rotateImage(Bitmap bitmap){
         ExifInterface exif = null;
         try {
-            exif = new ExifInterface(filePath);
+            exif = new ExifInterface(fileStorageDir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -271,7 +269,10 @@ public class Blockchain_user_registration extends AppCompatActivity
             bitmap.recycle();
             try {
                 File file=createPhotoFile("2");
-                filePath=file.getAbsolutePath();
+                fileStorageDir = file.getAbsolutePath();
+                photoURI = FileProvider.getUriForFile(
+                        getApplicationContext(), "com.example.Blockchain_App.fileprovider", file
+                );
                 FileOutputStream out;
                 out = new FileOutputStream(file);
                 bmRotated.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -295,7 +296,7 @@ public class Blockchain_user_registration extends AppCompatActivity
         photoFile = createPhotoFile("1");
         if (photoFile != null) {
             pathToFile = photoFile.getAbsolutePath();
-            filePath=pathToFile;
+            fileStorageDir = pathToFile;
             photoURI = FileProvider.getUriForFile(
                     getApplicationContext(), "com.example.Blockchain_App.fileprovider", photoFile
             );
