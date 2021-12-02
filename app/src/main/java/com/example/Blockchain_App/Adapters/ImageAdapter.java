@@ -97,7 +97,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
 
                     postBack(true);
-                    view.setClickable(false);
+                    view.setEnabled(false);
 
                 }
             });
@@ -109,7 +109,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Decline Clicked", Toast.LENGTH_SHORT).show();
 
                     postBack(false);
-                    view.setClickable(false);
+                    view.setEnabled(false);
 
                 }
             });
