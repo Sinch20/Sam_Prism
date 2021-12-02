@@ -13,33 +13,38 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import com.example.Blockchain_App.Model.Request;
 import com.example.Blockchain_App.Network.NetworkClient;
 import com.example.Blockchain_App.Network.UploadApis;
 import com.example.Blockchain_App.R;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Objects;
 import java.util.UUID;
 
 import okhttp3.MediaType;
@@ -54,6 +59,7 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 
 public class Blockchain_user_registration extends AppCompatActivity
 {
+    private static final String FLAT_NO = "Flat 101";
     private FirebaseAuth mAuth;
 
     String pathToFile;
@@ -61,13 +67,15 @@ public class Blockchain_user_registration extends AppCompatActivity
     String filePath = "Pictures/";
     private Button btn_register, btn_takepic;
     private ImageView imageView;
-    private String UserDetails = "";
+    private String UserName = "";
 
     private boolean  flag = false;
 
     // instance for firebase storage and StorageReference
     FirebaseStorage storage;
     StorageReference storageReference;
+    //firebase realtime database reference
+    private DatabaseReference mDatabase;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
 
@@ -104,9 +112,9 @@ public class Blockchain_user_registration extends AppCompatActivity
         RequestBody requestBody = RequestBody.create(MediaType.parse("image/*"), file);
         MultipartBody.Part parts = MultipartBody.Part.createFormData("newimage", file.getName(), requestBody);
         // get currently logged in users details from firebase
-        UserDetails = Objects.requireNonNull(mAuth.getCurrentUser()).getDisplayName();
+        UserName = (mAuth.getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getDisplayName();
         // forrm user requestbody of type  plain text
-        RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserDetails);
+        RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
 
         UploadApis uploadApis = retrofit.create(UploadApis.class);
         // make the network API call PARAM : image and username
@@ -131,11 +139,13 @@ public class Blockchain_user_registration extends AppCompatActivity
         progressDialog.setTitle("Uploading...");
         progressDialog.show();
 
+        //ID of the request
+        String reqID = UUID.randomUUID().toString();
         // Defining the child of storageReference
         StorageReference ref
                 = storageReference
                 .child("images/"
-                        + UUID.randomUUID().toString());
+                        + reqID);
         // adding listeners on upload
         // or failure of image
         ref.putFile(photoURI)
@@ -151,11 +161,25 @@ public class Blockchain_user_registration extends AppCompatActivity
                                             Toast.LENGTH_LONG)
                                     .show();
 
-                            ref.getDownloadUrl().addOnSuccessListener(uri -> Picasso.get()
-                                    .load(uri)
-                                    .resize(80, 80)
-                                    .centerCrop()
-                                    .into(imageView));
+
+
+
+                            ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    //building data to upload to db
+                                    Request request = new Request(UserName, reqID, uri, 0);
+                                    Log.i("Request", request.toString());
+                                    mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
+                                        @Override
+                                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Request Submitted", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                            });
+
 
                         })
 
@@ -302,5 +326,8 @@ public class Blockchain_user_registration extends AppCompatActivity
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
     }
 }
