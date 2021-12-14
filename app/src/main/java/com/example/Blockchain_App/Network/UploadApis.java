@@ -11,7 +11,9 @@ public interface UploadApis {
     @Multipart
     @POST("register")
     // uploadImage -> Register
-    Call<RequestBody> Register(@Part MultipartBody.Part part, @Part("username") RequestBody requestBody1);  //MultipartBody.Part part
+    Call<RequestBody> Register(@Part MultipartBody.Part part,
+                               @Part("username") RequestBody requestBody1,
+                               @Part("reqid") RequestBody requestBody2);  //MultipartBody.Part part
 
     @Multipart
     @POST("response")
@@ -23,5 +25,6 @@ public interface UploadApis {
     @Multipart
     @POST("verify")
     // verification route
-    Call<RequestBody> Verify(@Part MultipartBody.Part part, @Part("username") RequestBody requestBody2);  //MultipartBody.Part part
+    Call<RequestBody> Verify(@Part MultipartBody.Part part, 
+                             @Part("username") RequestBody requestBody2);  //MultipartBody.Part part
 }

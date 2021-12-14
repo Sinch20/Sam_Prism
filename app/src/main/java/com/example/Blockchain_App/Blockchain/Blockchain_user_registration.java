@@ -113,10 +113,12 @@ public class Blockchain_user_registration extends AppCompatActivity
         UserName = (mAuth.getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getDisplayName();
         // forrm user requestbody of type  plain text
         RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
-
+        //ID of the request
+        String reqID = UUID.randomUUID().toString();
+        RequestBody reqid = RequestBody.create(MediaType.parse("text/plain"), reqID);
         UploadApis uploadApis = retrofit.create(UploadApis.class);
         // make the network API call PARAM : image and username
-        Call call = uploadApis.Register(parts, username);
+        Call call = uploadApis.Register(parts, username, reqid);
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) {
@@ -137,8 +139,7 @@ public class Blockchain_user_registration extends AppCompatActivity
         progressDialog.setTitle("Uploading...");
         progressDialog.show();
 
-        //ID of the request
-        String reqID = UUID.randomUUID().toString();
+
         // Defining the child of storageReference
         StorageReference ref
                 = storageReference
