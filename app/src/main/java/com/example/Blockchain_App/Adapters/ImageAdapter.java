@@ -163,7 +163,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
         // form user requestbody of type  plain text
-        String UserName = (FirebaseAuth.getInstance().getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getEmail();
+        String UserName = (FirebaseAuth.getInstance().getCurrentUser().getDisplayName() == null)?"NULL":mAuth.getCurrentUser().getEmail();
         RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
 
         RequestBody reqID = RequestBody.create(MediaType.parse("text/plain"), (mRequests.get(0).toMap().get("ReqID")));
