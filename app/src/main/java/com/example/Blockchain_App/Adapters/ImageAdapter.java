@@ -3,6 +3,8 @@ import static com.example.Blockchain_App.Blockchain.Blockchain_user_registration
 
 import android.content.Context;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -41,6 +43,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     private Context mContext;
     private List<Request> mRequests;
     private OnItemClickListener mListener;
+
 
     public ImageAdapter(Context context, List<Request> uploads) {
         mContext = context;
@@ -162,7 +165,9 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         // form user requestbody of type  plain text
         String UserName = (FirebaseAuth.getInstance().getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getEmail();
         RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
-        RequestBody reqID = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(mRequests.get(0)));
+
+        RequestBody reqID = RequestBody.create(MediaType.parse("text/plain"), (mRequests.get(0).toMap().get("ReqID")));
+        Log.d("requestbody", mRequests.get(0).toMap().get("ReqID"));
         RequestBody response = RequestBody.create(MediaType.parse("text/plain"),
                 String.valueOf((i)?"accept".toUpperCase():"reject".toUpperCase()));
 
