@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.Blockchain_App.R;
@@ -16,6 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -25,10 +27,11 @@ public class activity_signup extends AppCompatActivity {
 
     private Button btn_createAcc;
     private AutoCompleteTextView email,pass;
+    private EditText username;
 
 
     private FirebaseAuth mAuth;
-   private  FirebaseDatabase realtimeDB = FirebaseDatabase.getInstance();
+    private  FirebaseDatabase realtimeDB = FirebaseDatabase.getInstance();
     private DatabaseReference realtimeDBReference = realtimeDB.getReference("prism-project-8c89e-default-rtdb");
 
 
@@ -57,7 +60,19 @@ public class activity_signup extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "createUserWithEmail:success");
 
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(username.getText().toString())
+                                    .build();
 
+                            mAuth.getCurrentUser().updateProfile(profileUpdates)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                Log.d(TAG, "User profile created.");
+                                            }
+                                        }
+                                    });
                             Intent homeIntent = new Intent(activity_signup.this,HomeActivity.class);
                             startActivity(homeIntent);
 
@@ -78,6 +93,7 @@ public class activity_signup extends AppCompatActivity {
         btn_createAcc = findViewById(R.id.btnCreateAcc);
         email = findViewById(R.id.atvEmailLog);
         pass = findViewById(R.id.atvPasswordLog);
+        username = findViewById(R.id.username);
     }
 
 
