@@ -55,8 +55,7 @@ import retrofit2.Retrofit;
 
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
-public class Blockchain_user_registration extends AppCompatActivity
-{
+public class Blockchain_user_registration extends AppCompatActivity {
     public static final String FLAT_NO = "Flat 101";
     public static FirebaseAuth mAuth;
 
@@ -67,7 +66,7 @@ public class Blockchain_user_registration extends AppCompatActivity
     private ImageView imageView;
     private String UserName = "";
 
-    private boolean  flag = false;
+    private boolean flag = false;
 
     // instance for firebase storage and StorageReference
     FirebaseStorage storage;
@@ -79,14 +78,12 @@ public class Blockchain_user_registration extends AppCompatActivity
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blockchain_user_registration);
         mAuth = FirebaseAuth.getInstance();
         init();
-        if (Build.VERSION.SDK_INT >= 23)
-        {
+        if (Build.VERSION.SDK_INT >= 23) {
             requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
         }
 
@@ -100,122 +97,121 @@ public class Blockchain_user_registration extends AppCompatActivity
 
  */
 
-    private void uploadImage()
-    {
-        // gets file path
-        File file = new File(fileStorageDir);
-        // get retrofit instance
-        Retrofit retrofit = NetworkClient.getRetrofit();
-        // form the request body for image
-        RequestBody requestBody = RequestBody.create(MediaType.parse("image/*"), file);
-        MultipartBody.Part parts = MultipartBody.Part.createFormData("newimage", file.getName(), requestBody);
-        // get currently logged in users details from firebase
-        UserName = (mAuth.getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getDisplayName();
-        // forrm user requestbody of type  plain text
-        RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
-
-        UploadApis uploadApis = retrofit.create(UploadApis.class);
-        // make the network API call PARAM : image and username
-        Call call = uploadApis.Register(parts, username);
-        call.enqueue(new Callback() {
-            @Override
-            public void onResponse(Call call, Response response) {
-                Toast.makeText(Blockchain_user_registration.this,""+response.message(),Toast.LENGTH_LONG).show();
-
-            }
-
-            @Override
-            public void onFailure(Call call, Throwable t) {
-                Toast.makeText(Blockchain_user_registration.this,""+ t.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        });
-
-
-        // Code for showing progressDialog while uploading
+    private void uploadImage() {
         ProgressDialog progressDialog
                 = new ProgressDialog(this);
-        progressDialog.setTitle("Uploading...");
-        progressDialog.show();
 
-        //ID of the request
-        String reqID = UUID.randomUUID().toString();
-        // Defining the child of storageReference
-        StorageReference ref
-                = storageReference
-                .child("images/"
-                        + reqID);
-        // adding listeners on upload
-        // or failure of image
-        ref.putFile(photoURI)
-                .addOnSuccessListener(
-                        taskSnapshot -> {
+        if (photoURI != null) {
+            // gets file path
+            File file = new File(fileStorageDir);
+            // get retrofit instance
+            Retrofit retrofit = NetworkClient.getRetrofit();
+            // form the request body for image
+            RequestBody requestBody = RequestBody.create(MediaType.parse("image/*"), file);
+            MultipartBody.Part parts = MultipartBody.Part.createFormData("newimage", file.getName(), requestBody);
+            // get currently logged in users details from firebase
+            UserName = (mAuth.getCurrentUser().getDisplayName().isEmpty()) ? "NULL" : mAuth.getCurrentUser().getDisplayName();
+            // forrm user requestbody of type  plain text
+            RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
 
-                            // Image uploaded successfully
-                            // Dismiss dialog
+            UploadApis uploadApis = retrofit.create(UploadApis.class);
+            // make the network API call PARAM : image and username
+            Call call = uploadApis.Register(parts, username);
+            call.enqueue(new Callback() {
+                @Override
+                public void onResponse(Call call, Response response) {
+                    Toast.makeText(Blockchain_user_registration.this, "" + response.message(), Toast.LENGTH_LONG).show();
+
+                }
+
+                @Override
+                public void onFailure(Call call, Throwable t) {
+                    Toast.makeText(Blockchain_user_registration.this, "" + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+            // Code for showing progressDialog while uploading
+            progressDialog.setTitle("Uploading...");
+            progressDialog.show();
+
+            //ID of the request
+            String reqID = UUID.randomUUID().toString();
+            // Defining the child of storageReference
+            StorageReference ref
+                    = storageReference
+                    .child("images/"
+                            + reqID);
+            // adding listeners on upload
+            // or failure of image
+
+            ref.putFile(photoURI)
+                    .addOnSuccessListener(
+                            taskSnapshot -> {
+
+                                // Image uploaded successfully
+                                // Dismiss dialog
+                                progressDialog.dismiss();
+                                Toast
+                                        .makeText(getApplicationContext(),
+                                                "Image Uploaded Successfully",
+                                                Toast.LENGTH_LONG)
+                                        .show();
+
+
+                                ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        //building data to upload to db
+                                        Request request = new Request(UserName, reqID, String.valueOf(uri), 0);
+                                        Log.i("Request", request.toString());
+                                        mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
+                                            @Override
+                                            public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                                                Toast.makeText(getApplicationContext(),
+                                                        "Request Submitted", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
+
+
+                            })
+
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+
+                            // Error, Image not uploaded
                             progressDialog.dismiss();
                             Toast
                                     .makeText(getApplicationContext(),
-                                            "Image Uploaded Successfully",
-                                            Toast.LENGTH_LONG)
+                                            "Failed " + e.getMessage(),
+                                            Toast.LENGTH_SHORT)
                                     .show();
+                        }
+                    })
+                    .addOnProgressListener(
+                            new OnProgressListener<UploadTask.TaskSnapshot>() {
 
-
-
-
-                            ref.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                // Progress Listener for loading
+                                // percentage on the dialog box
                                 @Override
-                                public void onSuccess(Uri uri) {
-                                    //building data to upload to db
-                                    Request request = new Request(UserName, reqID, String.valueOf(uri), 0);
-                                    Log.i("Request", request.toString());
-                                    mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
-                                        @Override
-                                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
-                                            Toast.makeText(getApplicationContext(),
-                                                    "Request Submitted", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                                public void onProgress(
+                                        UploadTask.TaskSnapshot taskSnapshot) {
+                                    double progress
+                                            = (100.0
+                                            * taskSnapshot.getBytesTransferred()
+                                            / taskSnapshot.getTotalByteCount());
+                                    progressDialog.setMessage(
+                                            "Uploaded "
+                                                    + (int) progress + "%");
                                 }
                             });
-
-
-                        })
-
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                        // Error, Image not uploaded
-                        progressDialog.dismiss();
-                        Toast
-                                .makeText(getApplicationContext(),
-                                        "Failed " + e.getMessage(),
-                                        Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                })
-                .addOnProgressListener(
-                        new OnProgressListener<UploadTask.TaskSnapshot>() {
-
-                            // Progress Listener for loading
-                            // percentage on the dialog box
-                            @Override
-                            public void onProgress(
-                                    UploadTask.TaskSnapshot taskSnapshot) {
-                                double progress
-                                        = (100.0
-                                        * taskSnapshot.getBytesTransferred()
-                                        / taskSnapshot.getTotalByteCount());
-                                progressDialog.setMessage(
-                                        "Uploaded "
-                                                + (int) progress + "%");
-                            }
-                        });
+        } else
+            Toast.makeText(this, "Click A Selfie to Submit Registration!", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == 1) {
@@ -226,7 +222,7 @@ public class Blockchain_user_registration extends AppCompatActivity
         }
     }
 
-    private Bitmap rotateImage(Bitmap bitmap){
+    private Bitmap rotateImage(Bitmap bitmap) {
         ExifInterface exif = null;
         try {
             exif = new ExifInterface(fileStorageDir);
@@ -268,7 +264,7 @@ public class Blockchain_user_registration extends AppCompatActivity
             Bitmap bmRotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             bitmap.recycle();
             try {
-                File file=createPhotoFile("2");
+                File file = createPhotoFile("2");
                 fileStorageDir = file.getAbsolutePath();
                 photoURI = FileProvider.getUriForFile(
                         getApplicationContext(), "com.example.Blockchain_App.fileprovider", file
@@ -281,16 +277,14 @@ public class Blockchain_user_registration extends AppCompatActivity
                 e.printStackTrace();
             }
             return bmRotated;
-        }
-        catch (OutOfMemoryError e) {
+        } catch (OutOfMemoryError e) {
             e.printStackTrace();
             return null;
         }
     }
 
 
-    private void dispatchPictureTakerAction()
-    {
+    private void dispatchPictureTakerAction() {
         Intent takePic = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File photoFile = null;
         photoFile = createPhotoFile("1");
@@ -305,21 +299,19 @@ public class Blockchain_user_registration extends AppCompatActivity
         }
     }
 
-    private File createPhotoFile(String i)
-    {
+    private File createPhotoFile(String i) {
         String name = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File storageDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         File image = null;
         try {
-            image = File.createTempFile(name+i, ".jpg", storageDir);
+            image = File.createTempFile(name + i, ".jpg", storageDir);
         } catch (IOException e) {
             Log.d("mylog", "Excep : " + e.toString());
         }
         return image;
     }
 
-    private void init()
-    {
+    private void init() {
         btn_takepic = findViewById(R.id.btn_takepic);
         btn_register = findViewById(R.id.btn_blockchain_reg);
         //btn_takepic = findViewById(R.id.btn_takepic);
