@@ -8,7 +8,9 @@ import com.google.firebase.database.Exclude;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -72,11 +74,21 @@ public class Request {
     }
 
     public void addApproval(String approval){
-        this.approvals.add(approval);
+        if(this.approvals != null) {
+            this.approvals.add(approval);
+            this.approvals = new ArrayList<>(new HashSet<String>(this.approvals));
+        }
+        else
+            this.approvals = new ArrayList<String>(Collections.singletonList(approval));
     }
 
     public void addDenial(String denial){
-        this.denials.add(denial);
+        if(this.denials != null){
+            this.denials.add(denial);
+            this.denials = new ArrayList<>(new HashSet<String>(this.denials));
+        }
+        else
+            this.denials = new ArrayList<String>(Collections.singletonList(denial));
     }
 
     public void setUrl(String url) {

@@ -169,7 +169,7 @@ public class Blockchain_user_registration extends AppCompatActivity {
                                     public void onSuccess(Uri uri) {
                                         //building data to upload to db
                                         Request request = new Request(UserName, reqID, mAuth.getCurrentUser().getEmail(),
-                                                String.valueOf(uri), new ArrayList<String>(), new ArrayList<String>());
+                                                String.valueOf(uri), new ArrayList<String>(1), new ArrayList<String>(1));
                                         Log.i("Request", request.toString());
                                         mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
                                             @Override

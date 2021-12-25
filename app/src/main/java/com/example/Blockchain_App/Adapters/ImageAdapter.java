@@ -54,6 +54,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     private List<Request> mRequests;
     private OnItemClickListener mListener;
     private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
 
     public ImageAdapter(Context context, List<Request> uploads) {
         mContext = context;
@@ -110,7 +111,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
                     updateFire(true);
                     postBack(true);
-                    view.setEnabled(false);
+                    acceptBtn.setEnabled(false);
+                    declineBtn.setEnabled(false);
 
                 }
             });
@@ -122,8 +124,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Decline Clicked", Toast.LENGTH_SHORT).show();
                     updateFire(false);
                     postBack(false);
-                    view.setEnabled(false);
-
+                    acceptBtn.setEnabled(false);
+                    declineBtn.setEnabled(false);
                 }
             });
         }
@@ -196,11 +198,12 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     }
 
     private void postBack(boolean i) {
+        mAuth = FirebaseAuth.getInstance();
         // get retrofit instance
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
         // form user requestbody of type  plain text
-        String UserName = (FirebaseAuth.getInstance().getCurrentUser().getDisplayName() == null)?"NULL":mAuth.getCurrentUser().getEmail();
+        String UserName = (mAuth.getCurrentUser().getDisplayName().isEmpty())?"NULL":mAuth.getCurrentUser().getEmail();
         RequestBody username = RequestBody.create(MediaType.parse("text/plain"), UserName);
 
         RequestBody reqID = RequestBody.create(MediaType.parse("text/plain"), (mRequests.get(0).toMap().get("ReqID")));
