@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Color;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,7 +80,17 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 .fit()
                 .centerCrop()
                 .into(holder.imageView);
-
+        String user = mAuth.getCurrentUser().getEmail();
+        if(requestCurrent.getApprovals() != null && requestCurrent.getApprovals().contains(user)){
+            holder.buttons.setVisibility(View.GONE);
+            holder.status.setVisibility(View.VISIBLE);
+        }
+        else if(requestCurrent.getDenials() != null && requestCurrent.getDenials().contains(user)){
+            holder.buttons.setVisibility(View.GONE);
+            holder.status.setText("Rejected ✘");
+            holder.status.setTextColor(Color.parseColor("#F60000"));
+            holder.status.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -92,14 +104,19 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         public ImageView imageView;
         public Button acceptBtn;
         public Button declineBtn;
+        public TextView status;
+        public LinearLayout buttons;
 
         public ImageViewHolder(View itemView) {
             super(itemView);
+            mAuth = FirebaseAuth.getInstance();
 
             textViewName = itemView.findViewById(R.id.example_name);
             imageView = itemView.findViewById(R.id.imagev);
             acceptBtn = itemView.findViewById(R.id.grant_button);
             declineBtn = itemView.findViewById(R.id.decline_button);
+            status = itemView.findViewById(R.id.status);
+            buttons = itemView.findViewById(R.id.buttonLayout);
 
             itemView.setOnClickListener(this);
             itemView.setOnCreateContextMenuListener(this);
@@ -111,9 +128,10 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
                     updateFire(true);
                     postBack(true);
-                    acceptBtn.setEnabled(false);
-                    declineBtn.setEnabled(false);
-
+//                    acceptBtn.setEnabled(false);
+//                    declineBtn.setEnabled(false);
+                    buttons.setVisibility(View.GONE);
+                    status.setVisibility(View.VISIBLE);
                 }
             });
 
@@ -124,8 +142,12 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     Toast.makeText(acceptBtn.getContext(), "Decline Clicked", Toast.LENGTH_SHORT).show();
                     updateFire(false);
                     postBack(false);
-                    acceptBtn.setEnabled(false);
-                    declineBtn.setEnabled(false);
+//                    acceptBtn.setEnabled(false);
+//                    declineBtn.setEnabled(false);
+                    buttons.setVisibility(View.GONE);
+                    status.setText("Rejected ✘");
+                    status.setTextColor(Color.parseColor("#F60000"));
+                    status.setVisibility(View.VISIBLE);
                 }
             });
         }
@@ -198,7 +220,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     }
 
     private void postBack(boolean i) {
-        mAuth = FirebaseAuth.getInstance();
         // get retrofit instance
         Retrofit retrofit = NetworkClient.getRetrofit();
         // form the request body for image
