@@ -1,7 +1,11 @@
 package com.example.Blockchain_App.Adapters;
+import static com.example.Blockchain_App.Blockchain.Blockchain_user_registration.FLAT_NO;
 import static com.example.Blockchain_App.Blockchain.Blockchain_user_registration.mAuth;
 
 import android.content.Context;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
@@ -17,13 +21,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.Blockchain_App.Blockchain.Blockchain_user_registration;
+import com.example.Blockchain_App.Core.ImagesActivity;
 import com.example.Blockchain_App.Model.Request;
 import com.example.Blockchain_App.Network.NetworkClient;
 import com.example.Blockchain_App.Network.UploadApis;
 import com.example.Blockchain_App.R;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
 
@@ -43,7 +53,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     private Context mContext;
     private List<Request> mRequests;
     private OnItemClickListener mListener;
-
+    private DatabaseReference mDatabase;
 
     public ImageAdapter(Context context, List<Request> uploads) {
         mContext = context;
@@ -53,7 +63,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     @Override
     public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(mContext).inflate(R.layout.card, parent, false);
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         return new ImageViewHolder(v);
     }
 
@@ -98,7 +108,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 public void onClick(View view) {
                     Snackbar.make(acceptBtn.getRootView(), "TODO: Backend integration", BaseTransientBottomBar.LENGTH_SHORT).show();
                     Toast.makeText(acceptBtn.getContext(), "Accept Clicked", Toast.LENGTH_SHORT).show();
-
+                    updateFire(true);
                     postBack(true);
                     view.setEnabled(false);
 
@@ -110,7 +120,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 public void onClick(View view) {
                     Snackbar.make(acceptBtn.getRootView(), "TODO: Backend integration", BaseTransientBottomBar.LENGTH_SHORT).show();
                     Toast.makeText(acceptBtn.getContext(), "Decline Clicked", Toast.LENGTH_SHORT).show();
-
+                    updateFire(false);
                     postBack(false);
                     view.setEnabled(false);
 
@@ -156,6 +166,33 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             }
             return false;
         }
+    }
+
+    private void updateFire(boolean b) {
+        mDatabase.child(FLAT_NO).child("Requests").get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("firebase", "Error getting data", task.getException());
+            }
+            else {
+                Request request = task.getResult().getValue(Request.class);
+                if (request != null) {
+                    Log.d("Firebase Fetch", String.valueOf(request.toMap()));
+                    Log.d("Firebase Auth", String.valueOf(mAuth.getCurrentUser().getEmail()));
+                    if(b){
+                        request.addApproval(mAuth.getCurrentUser().getEmail());
+                        mDatabase.child(FLAT_NO).child("Requests").setValue(request,
+                                (error, ref) -> Toast.makeText(mContext.getApplicationContext(),
+                                "Request Approved", Toast.LENGTH_SHORT).show());
+                    }
+                    else{
+                        request.addDenial(mAuth.getCurrentUser().getEmail());
+                        mDatabase.child(FLAT_NO).child("Requests").setValue(request,
+                                (error, ref) -> Toast.makeText(mContext.getApplicationContext(),
+                                "Request Denied", Toast.LENGTH_SHORT).show());
+                    }
+                }
+            }
+        });
     }
 
     private void postBack(boolean i) {

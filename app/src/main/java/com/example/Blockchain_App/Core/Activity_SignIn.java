@@ -63,6 +63,7 @@ public class Activity_SignIn extends AppCompatActivity {
                             Log.d(TAG, "signInWithEmail:success");
                             Intent SigninIntent = new Intent(Activity_SignIn.this,HomeActivity.class);
                             startActivity(SigninIntent);
+                            finish();
 
                         } else {
                             // If sign in fails, display a message to the user.

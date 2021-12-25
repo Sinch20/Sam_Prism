@@ -6,31 +6,41 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.database.Exclude;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Request {
 
     private String name;
     private String reqID;
+    private String mail;
     private String url;
-    private int no_of_approvals;
+    private List<String> approvals;
+    private List<String> denials;
 
     //required empty constructor
     public Request(){}
 
-
-    public Request(String name, String reqID, String url, int approvals){
+    public Request(String name, String reqID, String mail, String url, List<String> approvals, List<String> denials){
         this.name = name;
         this.reqID = reqID;
         this.url = url;
-        this.no_of_approvals = approvals;
+        this.mail = mail;
+        this.approvals = approvals;
+        this.denials = denials;
     }
 
 
     //getter and setter for each of the variables
-    public int getNo_of_approvals() {
-        return no_of_approvals;
+    public List<String> getApprovals() {
+        return approvals;
+    }
+
+    public List<String> getDenials() {
+        return denials;
     }
 
     public String getReqID() {
@@ -45,12 +55,28 @@ public class Request {
         return url;
     }
 
+    public String getMail() {
+        return mail;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setNo_of_approvals(int no_of_approvals) {
-        this.no_of_approvals = no_of_approvals;
+    public void setApprovals(List<String> approvals) {
+        this.approvals = approvals;
+    }
+
+    public void setDenials(List<String> denials) {
+        this.denials = denials;
+    }
+
+    public void addApproval(String approval){
+        this.approvals.add(approval);
+    }
+
+    public void addDenial(String denial){
+        this.denials.add(denial);
     }
 
     public void setUrl(String url) {
@@ -61,13 +87,20 @@ public class Request {
         this.reqID = reqID;
     }
 
+    public void setMail(String mail) {
+        this.mail = mail;
+    }
+
+
     @Exclude
     public Map<String, String> toMap() {
         HashMap<String, String> result = new HashMap<>();
         result.put("ReqID", getReqID());
         result.put("Name", getName());
+        result.put("Mail", getMail());
         result.put("URL", getUrl());
-        result.put("Approvals", String.valueOf(getNo_of_approvals()));
+        result.put("Approvals", String.valueOf(getApprovals()));
+        result.put("Denials", String.valueOf(getDenials()));
 
         return result;
     }

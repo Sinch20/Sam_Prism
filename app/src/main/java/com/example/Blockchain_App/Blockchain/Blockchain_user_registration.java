@@ -42,7 +42,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import okhttp3.MediaType;
@@ -166,13 +168,15 @@ public class Blockchain_user_registration extends AppCompatActivity {
                                     @Override
                                     public void onSuccess(Uri uri) {
                                         //building data to upload to db
-                                        Request request = new Request(UserName, reqID, String.valueOf(uri), 0);
+                                        Request request = new Request(UserName, reqID, mAuth.getCurrentUser().getEmail(),
+                                                String.valueOf(uri), new ArrayList<String>(), new ArrayList<String>());
                                         Log.i("Request", request.toString());
                                         mDatabase.child(FLAT_NO).child("Requests").setValue(request, new DatabaseReference.CompletionListener() {
                                             @Override
                                             public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
                                                 Toast.makeText(getApplicationContext(),
                                                         "Request Submitted", Toast.LENGTH_SHORT).show();
+                                                Blockchain_user_registration.super.onBackPressed();
                                             }
                                         });
                                     }

@@ -19,6 +19,7 @@ import com.example.Blockchain_App.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,6 +44,8 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
 
     private List<Request> mRequests;
 
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +55,7 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         mRequests = new ArrayList<>();
+        mAuth = FirebaseAuth.getInstance();
 
         mAdapter = new ImageAdapter(ImagesActivity.this, mRequests);
 
@@ -62,6 +66,11 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
         mStorage = FirebaseStorage.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
+        fetchCard();
+
+    }
+
+    private void fetchCard() {
         mDatabase.child(FLAT_NO).child("Requests").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -72,13 +81,15 @@ public class ImagesActivity extends AppCompatActivity implements ImageAdapter.On
                     Request pending = task.getResult().getValue(Request.class);
                     if (pending != null) {
                         Log.d("Firebase Fetch", String.valueOf(pending.toMap()));
-                        mRequests.add(pending);
-                        mAdapter.notifyDataSetChanged();
+                        Log.d("Firebase Auth", String.valueOf(mAuth.getCurrentUser().getEmail()));
+                        if(!(pending.getMail().equals(mAuth.getCurrentUser().getEmail()))) {
+                            mRequests.add(pending);
+                            mAdapter.notifyDataSetChanged();
+                        }
                     }
                 }
             }
         });
-
     }
 
     @Override

@@ -75,6 +75,7 @@ public class activity_signup extends AppCompatActivity {
                                     });
                             Intent homeIntent = new Intent(activity_signup.this,HomeActivity.class);
                             startActivity(homeIntent);
+                            finish();
 
                         } else {
                             // If sign in fails, display a message to the user.
